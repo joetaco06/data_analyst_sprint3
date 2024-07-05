@@ -22,11 +22,10 @@ create table credit_card (
 create index idx_creditcard 
 on transaction(credit_card_id);
 
+
 describe credit_card;
 
 show create table credit_card;
-
-drop table credit_card;
 
 # Ahora insertamos los datos en la tabla anteriormente creada:
 
@@ -308,14 +307,12 @@ INSERT INTO credit_card (id, iban, pan, pin, cvv, expiring_date) VALUES (       
 
 select * from credit_card;
 
-
 # Ejercicio 1.2 : Hay un error que debemos corregir al usuario con ID: "CcU-2938"
 
 # Observamos la info actual a ser corregida:
 SELECT *
 FROM credit_Card
 WHERE id = 'CcU-2938';
-
 
 # Se corrige el iban:
 
@@ -700,27 +697,60 @@ INSERT INTO user (id, name, surname, phone, email, birth_date, country, city, po
 
 SET foreign_key_checks = 1;
 
-#Paso 3: Eliminamos el campo "website" de la tabla "company"
+# Vemos que se ha alterado ciertas características de las tablas "company", "credit_card" y "user"
+# Resumen:
+# - en company: se ha eliminado el campo website.
+# - en credit_card: cambiar en id VARCHAR(15) a VARCHAR (20) / cambiar pin int a pin VARCHAR(4) / crear campo fecha_actual DATE
+# - en data_user: cambiar nombre de tabla de user a data_user / cambiar campo de email varchar(150) a personal_email varchar(150)
+ 
+#Paso 3: Se elimina el campo "website" de la tabla "company"
 
  alter table company
-  drop website,
+  drop website;
+  
+#Paso 4: Se modifica la longitud del tipo de dato del campo id de la tabla credit_card, varchar(15) a varchar(20):
 
-
-#Paso 4: Modificamos el tipo de dato del campo pin de la tabla credit_card
+alter table credit_card
+modify column id varchar(20);
+  
+#Paso 5: Se modifica el tipo de dato del campo pin de la tabla credit_card, de int a varchar(4):
 
 alter table credit_card
 modify pin varchar(4);
 
+#Paso 6: se crea el campo fecha_actual siendo como tipo DATE:
 
-#Paso 5: Realizaremos las modificaciones en los nombres de los campos en la tabla user
+alter table credit_card
+add column fecha_actual date;
 
-alter table user  
-change email personal_email VARCHAR(150);	
-    
-    
-    describe credit_card;
+#Paso 7: En tabla user, se modifica el nombre de tabla a data_user:
 
-    
+rename table user to data_user;
 
-	#Paso 3: Se cargan toda la información del script
+#Paso 8: En tabla data_user, se modifica el nombre del campo email a personal_email:
+
+alter table data_user
+change column email personal_email varchar(150);
+
+# NIVEL 3:
+
+# Ejercicio 3.2 : Crear una vista llamada "InformeTecnico" conteniendo la siguiente información:
+/*
+ID de la transacción; nombre del usuario/a, apellido del usuario/a; IBAN de la tarjeta de credito usada; 
+nombre de la compañía de la transacción realizada. 
+Mostrar resultados de la vista, ordenar los resultados de forma descendente en función de la
+variable ID de transacción.
+*/
+
+create or replace view InformeTecnico as
+select transaction.id as id_transaccion, data_user.name as nombre_usuario, data_user.surname as apellido_usuario, 
+credit_card.iban as iban_tarjeta_credito, transaction.amount as monto_transaccion, company.company_name as nombre_compañia
+from transaction
+join company on company.id = transaction.company_id
+join credit_card on credit_card.id = transaction.credit_card_id
+join data_user on data_user.id = transaction.user_id
+order by transaction.id desc;
+
+select * from InformeTecnico;
+
 
